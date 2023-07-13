@@ -1,13 +1,13 @@
 'use client'
 
-import Image from 'next/image'
+//import Image from 'next/image'
 
 import Head from 'next/head'
 import * as React from 'react';
 import Map from 'react-map-gl';
 
-import DeckGL from '@deck.gl/react/typed';
-import {ScatterplotLayer} from '@deck.gl/layers/typed';
+import {ScatterplotLayer} from '@deck.gl/layers';
+new ScatterplotLayer({});
 
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoicm9oaXRndWNjaWphY2tzb24iLCJhIjoiY2xrMHFpZGdjMGV2ZTNkbzMxa241OGhrYyJ9.9gYs1v4W-A3s4tfLcwHJrA'
 
