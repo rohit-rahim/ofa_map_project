@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
-
+const nextConfig = {
+    reactStrictMode: true,
+    swcMinify: true,
+    transpilePackages: ['@deck.gl/layers', '@mapbox/tiny-sdf'],
+    experimental: {
+      esmExternals: 'loose',
+    },
+  }
 module.exports = nextConfig
