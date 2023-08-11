@@ -6,7 +6,7 @@ import Head from 'next/head'
 //import * as React from 'react';
 import Map from 'react-map-gl';
 
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import DeckGL from '@deck.gl/react/typed';
 
@@ -15,6 +15,10 @@ new ScatterplotLayer({});
 
 import {HexagonLayer} from '@deck.gl/aggregation-layers';
 new HexagonLayer({});
+
+import {TripsLayer} from '@deck.gl/geo-layers';
+new TripsLayer({});
+
 
 const MAPBOX_TOKEN = 'pk.eyJ1Ijoicm9oaXRndWNjaWphY2tzb24iLCJhIjoiY2xrMHFpZGdjMGV2ZTNkbzMxa241OGhrYyJ9.9gYs1v4W-A3s4tfLcwHJrA'
 
@@ -79,16 +83,61 @@ const scatterplotLayer = (city) => {
 };
 
 
-
-
-
 export default function Home() {
 
   const [selectedDataset, setSelectedDataset] = useState('nyc');
   const [selectedLayer, setSelectedLayer] = useState('scatterplot');
 
 
-  const layer = selectedLayer === 'scatterplot' ? scatterplotLayer(selectedDataset) : hexagonLayer(selectedDataset);
+  //const layer = selectedLayer === 'scatterplot' ? scatterplotLayer(selectedDataset) : hexagonLayer(selectedDataset);
+
+  const [layers, setLayers] = useState([]);
+  const [ref, setRef] = useState(null);
+
+  useEffect(() => {
+    switch (selectedLayer) {
+      case 'scatterplot':
+        if (ref) clearInterval(ref);
+        setLayers([scatterplotLayer(selectedDataset)]);
+        break;
+      case 'hexagon':
+        if (ref) clearInterval(ref);
+        setLayers([hexagonLayer(selectedDataset)]);
+        break;
+      case 'trips':
+        const timer = setInterval(() => { 
+          setLayers([
+            new TripsLayer({
+              id: 'trips',
+              data:
+                'https://raw.githubusercontent.com/uber-common/deck.gl-data/master/examples/trips/trips-v7.json',
+              getPath: (d) => {
+                return d.path;
+              },
+              getTimestamps: (d) => {
+                return d.timestamps;
+              },
+              getColor: (d) => {
+                return d.vendor === 0 ? [252, 192, 30] : [23, 184, 190];
+              },
+              opacity: 0.8,
+              widthMinPixels: 4,
+              rounded: true,
+              trailLength: 180,
+              currentTime: (performance.now() % 20000) / 10,
+              shadowEnabled: false,
+            }),
+          ]);
+        }, 50);
+        console.log({ timer });
+        setRef(timer);
+        break;
+      default:
+        throw new Error('Invalid layer');
+    }
+  }, [selectedLayer, selectedDataset]);
+
+
 
   const handleLayerChange = (x) => {
     const newSelectedLayer = x.target.value;
@@ -104,7 +153,7 @@ export default function Home() {
     <main>
 
       <DeckGL
-          layers={[layer]}
+          layers={[layers]}
           controller
           initialViewState={{
             longitude: -74.0021069,
@@ -118,11 +167,17 @@ export default function Home() {
             <select onChange={handleLayerChange} value={selectedLayer} style={{ backgroundColor: 'rgba(174, 182, 191, 0.2)', color: '#FFA500', padding: '8px', border: 'none' }}>
               <option value="scatterplot">Scatterplot Layer</option>
               <option value="hexagon" >Hexagon Layer</option>
+              <option value="trips" >Traffic Layer</option>
             </select>
-            <select onChange={handleDatasetChange} value={selectedDataset} style={{ backgroundColor: 'rgba(174, 182, 191, 0.2)', color: '#FFA500', padding: '8px', border: 'none' }}>
-              <option value="la">LA Active Businesses</option>
-              <option value="nyc">NYC Trees</option>
-            </select>
+            <span style={{color:'#FFA500'}}>Dataset: </span>
+              {selectedLayer === 'trips' ? (
+                <div style={{color:'#FFA500'}}>NYC</div>
+              ) : (
+              <select onChange={handleDatasetChange} value={selectedDataset} style={{ backgroundColor: 'rgba(174, 182, 191, 0.2)', color: '#FFA500', padding: '8px', border: 'none' }}>
+                <option value="la">LA Active Businesses</option>
+                <option value="nyc">NYC Trees</option>
+              </select>
+            )}
           </div>
           <Map
             mapboxAccessToken={MAPBOX_TOKEN}
